@@ -1,0 +1,7 @@
+.ai
+.ai/*
+venv
+venv/*
+__pycache__
+__pycache__/*
+
