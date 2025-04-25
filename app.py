@@ -6,29 +6,29 @@ import psycopg2
 from pymongo import MongoClient
 import redis
 import bcrypt
+from utils.config import get_config
 
+# Load environment variables from .env file
 load_dotenv()
 
+# Get the current configuration
+config = get_config()
+
 app = Flask(__name__)
-app.secret_key = os.getenv('SECRET_KEY')
+app.config.from_object(config)
 
 # PostgreSQL setup (Users)
-#pg_conn = psycopg2.connect(
-#    dbname=os.getenv('PG_DB'),
-#    user=os.getenv('PG_USER'),
-#    password=os.getenv('PG_PASSWORD'),
-#    host=os.getenv('PG_HOST')
-#)
+#pg_conn = psycopg2.connect(app.config['DATABASE_URL'])
 
 # MongoDB setup (Posts)
-#mongo_client = MongoClient(os.getenv('MONGO_URI'))
-#mongo_db = mongo_client[os.getenv('MONGO_DB')]
+#mongo_client = MongoClient(app.config['MONGO_URI'])
+#mongo_db = mongo_client[app.config['MONGO_DB']]
 #posts_collection = mongo_db.posts
 
 # Redis setup (Cache)
 #redis_client = redis.Redis(
-#    host=os.getenv('REDIS_HOST'),
-#    port=os.getenv('REDIS_PORT'),
+#    host=app.config['REDIS_HOST'],
+#    port=app.config['REDIS_PORT'],
 #    db=0
 #)
 
