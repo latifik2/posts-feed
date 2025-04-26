@@ -164,6 +164,52 @@ def manage_post(post_id):
         
     return redirect(url_for('feed'))
 
+@app.route('/profile', methods=['GET', 'POST'])
+def profile():
+    if 'user_id' not in session:
+        flash('Необходимо войти в систему')
+        return redirect(url_for('login'))
+    
+    # Получаем данные пользователя
+    user = user_service.get_user_by_id(session['user_id'])
+    if not user:
+        flash('Пользователь не найден')
+        return redirect(url_for('login'))
+    
+    if request.method == 'POST':
+        email = request.form.get('email', '').strip()
+        first_name = request.form.get('first_name', '').strip()
+        last_name = request.form.get('last_name', '').strip()
+        current_password = request.form.get('current_password', '').strip()
+        
+        # Проверяем текущий пароль
+        if not user_service.check_password(user, current_password):
+            flash('Неверный пароль')
+            return render_template('profile.html', user=user)
+        
+        # Проверяем email
+        if email != user.email:
+            # Проверяем, не занят ли email другим пользователем
+            existing_user = user_service.get_user_by_email(email)
+            if existing_user and existing_user.id != user.id:
+                flash('Email уже используется другим пользователем')
+                return render_template('profile.html', user=user)
+        
+        # Обновляем данные пользователя
+        try:
+            user_service.update_user(
+                user_id=user.id,
+                email=email,
+                first_name=first_name if first_name else None,
+                last_name=last_name if last_name else None
+            )
+            flash('Профиль успешно обновлен')
+            return redirect(url_for('profile'))
+        except Exception as e:
+            flash(f'Ошибка при обновлении профиля: {str(e)}')
+    
+    return render_template('profile.html', user=user)
+
 def get_username(user_id):
     # Mock username retrieval
     # with pg_conn.cursor() as cur:

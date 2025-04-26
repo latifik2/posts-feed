@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}Профиль{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h2 class="mb-0">Профиль пользователя</h2>
+            </div>
+            <div class="card-body">
+                {% with messages = get_flashed_messages() %}
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-info">{{ message }}</div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+                
+                <form method="POST" action="{{ url_for('profile') }}">
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Имя пользователя</label>
+                        <input type="text" class="form-control" id="username" value="{{ user.username }}" disabled>
+                        <div class="form-text">Имя пользователя нельзя изменить</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="email" name="email" value="{{ user.email }}" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="first_name" class="form-label">Имя</label>
+                        <input type="text" class="form-control" id="first_name" name="first_name" value="{{ user.first_name or '' }}">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="last_name" class="form-label">Фамилия</label>
+                        <input type="text" class="form-control" id="last_name" name="last_name" value="{{ user.last_name or '' }}">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="current_password" class="form-label">Текущий пароль</label>
+                        <input type="password" class="form-control" id="current_password" name="current_password">
+                        <div class="form-text">Введите текущий пароль для подтверждения изменений</div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">Сохранить изменения</button>
+                    <a href="{{ url_for('feed') }}" class="btn btn-secondary">Вернуться к ленте</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

@@ -63,13 +63,24 @@ class UserService:
             if self.session is None:
                 db.close()
 
-    def update_user(self, user: User) -> User:
+    def update_user(self, user_id: int, email: str, first_name: Optional[str] = None, last_name: Optional[str] = None) -> Optional[User]:
         """Update user information."""
         db = self.db
         try:
+            user = db.query(User).filter(User.id == user_id).first()
+            if not user:
+                return None
+                
+            user.email = email
+            user.first_name = first_name
+            user.last_name = last_name
+            
             db.commit()
             db.refresh(user)
             return user
+        except Exception:
+            db.rollback()
+            raise
         finally:
             if self.session is None:
                 db.close()
