@@ -48,6 +48,33 @@
                     
                     <button type="submit" class="btn btn-primary">Сохранить изменения</button>
                     <a href="{{ url_for('feed') }}" class="btn btn-secondary">Вернуться к ленте</a>
+                    <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteProfileModal">
+                        Удалить профиль
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal для подтверждения удаления профиля -->
+<div class="modal fade" id="deleteProfileModal" tabindex="-1" aria-labelledby="deleteProfileModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteProfileModalLabel">Подтверждение удаления профиля</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Вы уверены, что хотите удалить свой профиль? Это действие нельзя отменить.</p>
+                <form method="POST" action="{{ url_for('profile') }}">
+                    <input type="hidden" name="_method" value="DELETE">
+                    <div class="mb-3">
+                        <label for="confirm_password" class="form-label">Введите пароль для подтверждения</label>
+                        <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+                    </div>
+                    <button type="submit" class="btn btn-danger">Удалить профиль</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
                 </form>
             </div>
         </div>

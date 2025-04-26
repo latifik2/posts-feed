@@ -164,7 +164,7 @@ def manage_post(post_id):
         
     return redirect(url_for('feed'))
 
-@app.route('/profile', methods=['GET', 'POST'])
+@app.route('/profile', methods=['GET', 'POST', 'DELETE'])
 def profile():
     if 'user_id' not in session:
         flash('Необходимо войти в систему')
@@ -176,6 +176,29 @@ def profile():
         flash('Пользователь не найден')
         return redirect(url_for('login'))
     
+    # Обработка DELETE запроса (удаление профиля)
+    if request.method == 'DELETE' or (request.method == 'POST' and request.form.get('_method') == 'DELETE'):
+        # Проверяем пароль для подтверждения
+        confirm_password = request.form.get('confirm_password', '').strip()
+        if not user_service.check_password(user, confirm_password):
+            flash('Неверный пароль')
+            return redirect(url_for('profile'))
+        
+        # Удаляем пользователя
+        try:
+            if user_service.delete_user(user):
+                # Очищаем сессию
+                session.clear()
+                flash('Профиль успешно удален')
+                return redirect(url_for('login'))
+            else:
+                flash('Ошибка при удалении профиля')
+                return redirect(url_for('profile'))
+        except Exception as e:
+            flash(f'Ошибка при удалении профиля: {str(e)}')
+            return redirect(url_for('profile'))
+    
+    # Обработка POST запроса (обновление профиля)
     if request.method == 'POST':
         email = request.form.get('email', '').strip()
         first_name = request.form.get('first_name', '').strip()
@@ -208,6 +231,7 @@ def profile():
         except Exception as e:
             flash(f'Ошибка при обновлении профиля: {str(e)}')
     
+    # GET запрос - отображение профиля
     return render_template('profile.html', user=user)
 
 def get_username(user_id):
