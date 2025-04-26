@@ -20,7 +20,7 @@ class User(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     # Relationships
-    posts = relationship('Post', backref='author', lazy='dynamic')
+    # posts = relationship('Post', backref='author', lazy='dynamic')
     
     def __repr__(self) -> str:
         return f'<User {self.username}>'

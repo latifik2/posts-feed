@@ -2,17 +2,18 @@ from typing import Optional, Generator
 from werkzeug.security import generate_password_hash, check_password_hash
 from models.user import User
 from sqlalchemy.orm import Session
-from .init_db import get_db
+from .init_db import get_db, SessionLocal
 
 class UserService:
     def __init__(self, session: Optional[Session] = None):
         self.session = session
 
     @property
-    def db(self) -> Generator[Session, None, None]:
+    def db(self) -> Session:
         """Get database session."""
         if self.session is None:
-            return next(get_db())
+            # Создаем новую сессию вместо использования генератора
+            return SessionLocal()
         return self.session
 
     def create_user(self, username: str, email: str, password: str,
@@ -25,37 +26,57 @@ class UserService:
             last_name=last_name
         )
         self.set_password(user, password)
-        db = next(self.db)
-        db.add(user)
-        db.commit()
-        db.refresh(user)
-        return user
+        db = self.db
+        try:
+            db.add(user)
+            db.commit()
+            db.refresh(user)
+            return user
+        finally:
+            if self.session is None:
+                db.close()
 
     def get_user_by_id(self, user_id: int) -> Optional[User]:
         """Get user by ID."""
-        db = next(self.db)
-        return db.query(User).filter(User.id == user_id).first()
+        db = self.db
+        try:
+            return db.query(User).filter(User.id == user_id).first()
+        finally:
+            if self.session is None:
+                db.close()
 
     def get_user_by_email(self, email: str) -> Optional[User]:
         """Get user by email."""
-        db = next(self.db)
-        return db.query(User).filter(User.email == email).first()
+        db = self.db
+        try:
+            return db.query(User).filter(User.email == email).first()
+        finally:
+            if self.session is None:
+                db.close()
 
     def get_user_by_username(self, username: str) -> Optional[User]:
         """Get user by username."""
-        db = next(self.db)
-        return db.query(User).filter(User.username == username).first()
+        db = self.db
+        try:
+            return db.query(User).filter(User.username == username).first()
+        finally:
+            if self.session is None:
+                db.close()
 
     def update_user(self, user: User) -> User:
         """Update user information."""
-        db = next(self.db)
-        db.commit()
-        db.refresh(user)
-        return user
+        db = self.db
+        try:
+            db.commit()
+            db.refresh(user)
+            return user
+        finally:
+            if self.session is None:
+                db.close()
 
     def delete_user(self, user: User) -> bool:
         """Delete user."""
-        db = next(self.db)
+        db = self.db
         try:
             db.delete(user)
             db.commit()
@@ -63,6 +84,9 @@ class UserService:
         except Exception:
             db.rollback()
             return False
+        finally:
+            if self.session is None:
+                db.close()
 
     @staticmethod
     def set_password(user: User, password: str) -> None:

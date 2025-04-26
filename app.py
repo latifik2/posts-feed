@@ -1,12 +1,13 @@
 import os
 from datetime import datetime
-from flask import Flask, render_template, request, redirect, session
+from flask import Flask, render_template, request, redirect, session, flash
 from dotenv import load_dotenv
 import psycopg2
 from pymongo import MongoClient
 import redis
 import bcrypt
 from utils.config import get_config
+from database.users import UserService
 
 # Load environment variables from .env file
 load_dotenv()
@@ -31,6 +32,9 @@ app.config.from_object(config)
 #    port=app.config['REDIS_PORT'],
 #    db=0
 #)
+
+# Инициализация сервиса пользователей
+user_service = UserService()
 
 def get_cached_posts():
     # cached = redis_client.get('last_posts')
@@ -58,25 +62,69 @@ def feed():
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
+        # Получаем данные из формы
+        username = request.form.get('username', '').strip()
+        email = request.form.get('email', '').strip()
+        password = request.form.get('password', '')
+        first_name = request.form.get('first_name', '').strip()
+        last_name = request.form.get('last_name', '').strip()
         
-        # Validation
-        if not username or not password:
-            return "Ошибка: Имя пользователя и пароль обязательны", 400
+        # Проверка обязательных полей
+        if not username:
+            return "Ошибка: Имя пользователя обязательно", 400
+        if not email:
+            return "Ошибка: Email обязателен", 400
+        if not password:
+            return "Ошибка: Пароль обязателен", 400
+            
+        # Проверка длины имени пользователя
         if len(username) < 3:
             return "Ошибка: Имя пользователя должно содержать минимум 3 символа", 400
+        if len(username) > 64:
+            return "Ошибка: Имя пользователя не должно превышать 64 символа", 400
+            
+        # Проверка длины пароля
         if len(password) < 6:
             return "Ошибка: Пароль должен содержать минимум 6 символов", 400
             
-        # Mock successful registration
-        # with pg_conn.cursor() as cur:
-        #     cur.execute(
-        #         "INSERT INTO users (username, password) VALUES (%s, %s)",
-        #         (username, password)
-        #     )
-        #     pg_conn.commit()
-        return "Регистрация успешно выполнена", 200
+        # Проверка валидности email
+        import re
+        email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+        if not re.match(email_pattern, email):
+            return "Ошибка: Некорректный формат email", 400
+            
+        # Проверка длины имени и фамилии (если они указаны)
+        if first_name and len(first_name) > 64:
+            return "Ошибка: Имя не должно превышать 64 символа", 400
+        if last_name and len(last_name) > 64:
+            return "Ошибка: Фамилия не должна превышать 64 символа", 400
+            
+        try:
+            # Проверяем, существует ли пользователь с таким именем или email
+            if user_service.get_user_by_username(username):
+                return "Ошибка: Пользователь с таким именем уже существует", 400
+                
+            if user_service.get_user_by_email(email):
+                return "Ошибка: Пользователь с таким email уже существует", 400
+            
+            # Создаем нового пользователя
+            user = user_service.create_user(
+                username=username,
+                email=email,
+                password=password,
+                first_name=first_name if first_name else None,
+                last_name=last_name if last_name else None
+            )
+            
+            # Автоматически входим пользователя после регистрации
+            session['user_id'] = user.id
+            
+            return redirect('/')
+            
+        except Exception as e:
+            # В реальном приложении здесь нужно логировать ошибку
+            return f"Ошибка при регистрации: {str(e)}", 500
+            
     return render_template('register.html')
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -84,26 +132,31 @@ def login():
     if request.method == 'GET':
         return render_template('login.html')
         
-    username = request.form['username']
-    password = request.form['password']
+    # Получаем данные из формы и удаляем лишние пробелы
+    username = request.form.get('username', '').strip()
+    password = request.form.get('password', '')
     
-    # Validation
-    if not username or not password:
-        return "Ошибка: Имя пользователя и пароль обязательны", 400
+    # Проверка обязательных полей
+    if not username:
+        return "Ошибка: Имя пользователя обязательно", 400
+    if not password:
+        return "Ошибка: Пароль обязателен", 400
+    
+    try:
+        # Получаем пользователя по имени
+        user = user_service.get_user_by_username(username)
         
-    # Mock successful login
-    # with pg_conn.cursor() as cur:
-    #     cur.execute(
-    #         "SELECT id, password FROM users WHERE username = %s",
-    #         (username,)
-    #     )
-    #     user = cur.fetchone()
-    #     
-    #     if user and bcrypt.checkpw(password, user[1]):
-    #         session['user_id'] = user[0]
-    
-    session['user_id'] = 1  # Mock user ID
-    return redirect('/')
+        # Проверяем, существует ли пользователь и правильный ли пароль
+        if not user or not user_service.check_password(user, password):
+            return "Ошибка: Неверное имя пользователя или пароль", 400
+        
+        # Устанавливаем сессию
+        session['user_id'] = user.id
+        return redirect('/')
+        
+    except Exception as e:
+        # В реальном приложении здесь нужно логировать ошибку
+        return f"Ошибка при входе: {str(e)}", 500
 
 @app.route('/post', methods=['POST'])
 def create_post():

@@ -1,16 +1,94 @@
 {% extends "base.html" %}
 
+{% block title %}Регистрация{% endblock %}
+
 {% block content %}
-<h2>Register</h2>
-<form method="POST">
-    <div class="mb-3">
-        <label class="form-label">Username</label>
-        <input type="text" name="username" class="form-control" required>
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">Регистрация</h3>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('register') }}" class="needs-validation" novalidate>
+                        <div class="mb-3">
+                            <label for="username" class="form-label">Имя пользователя *</label>
+                            <input type="text" class="form-control" id="username" name="username" 
+                                   required minlength="3" maxlength="64" 
+                                   pattern="[a-zA-Z0-9_]+" 
+                                   title="Имя пользователя должно содержать от 3 до 64 символов и может включать только буквы, цифры и символ подчеркивания">
+                            <div class="invalid-feedback">
+                                Имя пользователя должно содержать от 3 до 64 символов и может включать только буквы, цифры и символ подчеркивания.
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email *</label>
+                            <input type="email" class="form-control" id="email" name="email" 
+                                   required pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+                                   title="Введите корректный email адрес">
+                            <div class="invalid-feedback">
+                                Пожалуйста, введите корректный email адрес.
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Пароль *</label>
+                            <input type="password" class="form-control" id="password" name="password" 
+                                   required minlength="6"
+                                   title="Пароль должен содержать минимум 6 символов">
+                            <div class="invalid-feedback">
+                                Пароль должен содержать минимум 6 символов.
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="first_name" class="form-label">Имя</label>
+                            <input type="text" class="form-control" id="first_name" name="first_name" 
+                                   maxlength="64"
+                                   title="Имя не должно превышать 64 символа">
+                            <div class="invalid-feedback">
+                                Имя не должно превышать 64 символа.
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="last_name" class="form-label">Фамилия</label>
+                            <input type="text" class="form-control" id="last_name" name="last_name" 
+                                   maxlength="64"
+                                   title="Фамилия не должна превышать 64 символа">
+                            <div class="invalid-feedback">
+                                Фамилия не должна превышать 64 символа.
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">Зарегистрироваться</button>
+                            <a href="{{ url_for('login') }}" class="btn btn-link">Уже есть аккаунт? Войти</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
-    <div class="mb-3">
-        <label class="form-label">Password</label>
-        <input type="password" name="password" class="form-control" required>
-    </div>
-    <button type="submit" class="btn btn-primary">Register</button>
-</form>
+</div>
+
+<script>
+// Валидация формы на стороне клиента
+(function () {
+    'use strict'
+    var forms = document.querySelectorAll('.needs-validation')
+    Array.prototype.slice.call(forms)
+        .forEach(function (form) {
+            form.addEventListener('submit', function (event) {
+                if (!form.checkValidity()) {
+                    event.preventDefault()
+                    event.stopPropagation()
+                }
+                form.classList.add('was-validated')
+            }, false)
+        })
+})()
+</script>
 {% endblock %}
