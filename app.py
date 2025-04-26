@@ -1,6 +1,6 @@
 import os
 from datetime import datetime
-from flask import Flask, render_template, request, redirect, session, flash
+from flask import Flask, render_template, request, redirect, session, flash, url_for
 from dotenv import load_dotenv
 import psycopg2
 from pymongo import MongoClient
@@ -8,6 +8,7 @@ import redis
 import bcrypt
 from utils.config import get_config
 from database.users import UserService
+from utils.validators import validate_user_data, validate_login_data, validate_post_data
 
 # Load environment variables from .env file
 load_dotenv()
@@ -36,15 +37,6 @@ app.config.from_object(config)
 # Инициализация сервиса пользователей
 user_service = UserService()
 
-def get_cached_posts():
-    # cached = redis_client.get('last_posts')
-    # return eval(cached.decode()) if cached else None
-    pass
-
-def cache_posts(posts):
-    # redis_client.setex('last_posts', 300, str(posts[:5]))
-    pass
-
 @app.route('/')
 def feed():
     # Mock response for feed
@@ -62,42 +54,16 @@ def feed():
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
-        # Получаем данные из формы
         username = request.form.get('username', '').strip()
         email = request.form.get('email', '').strip()
-        password = request.form.get('password', '')
+        password = request.form.get('password', '').strip()
         first_name = request.form.get('first_name', '').strip()
         last_name = request.form.get('last_name', '').strip()
         
-        # Проверка обязательных полей
-        if not username:
-            return "Ошибка: Имя пользователя обязательно", 400
-        if not email:
-            return "Ошибка: Email обязателен", 400
-        if not password:
-            return "Ошибка: Пароль обязателен", 400
-            
-        # Проверка длины имени пользователя
-        if len(username) < 3:
-            return "Ошибка: Имя пользователя должно содержать минимум 3 символа", 400
-        if len(username) > 64:
-            return "Ошибка: Имя пользователя не должно превышать 64 символа", 400
-            
-        # Проверка длины пароля
-        if len(password) < 6:
-            return "Ошибка: Пароль должен содержать минимум 6 символов", 400
-            
-        # Проверка валидности email
-        import re
-        email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
-        if not re.match(email_pattern, email):
-            return "Ошибка: Некорректный формат email", 400
-            
-        # Проверка длины имени и фамилии (если они указаны)
-        if first_name and len(first_name) > 64:
-            return "Ошибка: Имя не должно превышать 64 символа", 400
-        if last_name and len(last_name) > 64:
-            return "Ошибка: Фамилия не должна превышать 64 символа", 400
+        is_valid, error_message = validate_user_data(username, email, password, first_name, last_name)
+        if not is_valid:
+            flash(error_message)
+            return render_template('register.html')
             
         try:
             # Проверяем, существует ли пользователь с таким именем или email
@@ -119,7 +85,8 @@ def register():
             # Автоматически входим пользователя после регистрации
             session['user_id'] = user.id
             
-            return redirect('/')
+            flash('Регистрация успешна!')
+            return redirect(url_for('login'))
             
         except Exception as e:
             # В реальном приложении здесь нужно логировать ошибку
@@ -132,78 +99,70 @@ def login():
     if request.method == 'GET':
         return render_template('login.html')
         
-    # Получаем данные из формы и удаляем лишние пробелы
-    username = request.form.get('username', '').strip()
-    password = request.form.get('password', '')
-    
-    # Проверка обязательных полей
-    if not username:
-        return "Ошибка: Имя пользователя обязательно", 400
-    if not password:
-        return "Ошибка: Пароль обязателен", 400
-    
-    try:
-        # Получаем пользователя по имени
-        user = user_service.get_user_by_username(username)
+    if request.method == 'POST':
+        username = request.form.get('username', '').strip()
+        password = request.form.get('password', '').strip()
         
-        # Проверяем, существует ли пользователь и правильный ли пароль
-        if not user or not user_service.check_password(user, password):
-            return "Ошибка: Неверное имя пользователя или пароль", 400
-        
-        # Устанавливаем сессию
-        session['user_id'] = user.id
-        return redirect('/')
-        
-    except Exception as e:
-        # В реальном приложении здесь нужно логировать ошибку
-        return f"Ошибка при входе: {str(e)}", 500
+        is_valid, error_message = validate_login_data(username, password)
+        if not is_valid:
+            flash(error_message)
+            return render_template('login.html')
+            
+        try:
+            # Получаем пользователя по имени
+            user = user_service.get_user_by_username(username)
+            
+            # Проверяем, существует ли пользователь и правильный ли пароль
+            if not user or not user_service.check_password(user, password):
+                return "Ошибка: Неверное имя пользователя или пароль", 400
+            
+            # Устанавливаем сессию
+            session['user_id'] = user.id
+            flash('Вход выполнен успешно!')
+            return redirect(url_for('feed'))
+               
+        except Exception as e:
+            # В реальном приложении здесь нужно логировать ошибку
+            return f"Ошибка при входе: {str(e)}", 500
 
 @app.route('/post', methods=['POST'])
 def create_post():
-    content = request.form['content']
+    if 'user_id' not in session:
+        flash('Необходимо войти в систему')
+        return redirect(url_for('login'))
+        
+    content = request.form.get('content', '').strip()
     
-    # Validation
-    if not content:
-        return "Ошибка: Содержание поста не может быть пустым", 400
-    if len(content) > 1000:
-        return "Ошибка: Пост слишком длинный (максимум 1000 символов)", 400
-    
-    # Mock post creation
-    # post = {
-    #     'user_id': session['user_id'],
-    #     'username': get_username(session['user_id']),
-    #     'content': content,
-    #     'created_at': datetime.now()
-    # }
-    # posts_collection.insert_one(post)
-    # redis_client.delete('last_posts')
-    
-    return "Запрос выполнен успешно", 200
+    is_valid, error_message = validate_post_data(content)
+    if not is_valid:
+        flash(error_message)
+        return redirect(url_for('feed'))
+        
+    # Здесь будет код для сохранения поста в базу данных
+    flash('Пост успешно создан!')
+    return redirect(url_for('feed'))
 
 @app.route('/post/<post_id>', methods=['PUT', 'DELETE'])
 def manage_post(post_id):
+    if 'user_id' not in session:
+        flash('Необходимо войти в систему')
+        return redirect(url_for('login'))
+        
     if request.method == 'PUT':
-        content = request.form.get('content')
+        content = request.form.get('content', '').strip()
         
-        # Validation
-        if not content:
-            return "Ошибка: Содержание поста не может быть пустым", 400
-        if len(content) > 1000:
-            return "Ошибка: Пост слишком длинный (максимум 1000 символов)", 400
-        
-        # Mock post update
-        # posts_collection.update_one(
-        #     {'_id': post_id},
-        #     {'$set': {'content': content}}
-        # )
-        # redis_client.delete('last_posts')
-        return "Контент изменен успешно", 200
-    
+        is_valid, error_message = validate_post_data(content)
+        if not is_valid:
+            flash(error_message)
+            return redirect(url_for('feed'))
+            
+        # Здесь будет код для обновления поста
+        flash('Пост успешно обновлен!')
     elif request.method == 'DELETE':
-        # Mock post deletion
-        # posts_collection.delete_one({'_id': post_id})
-        # redis_client.delete('last_posts')
-        return "Пост удален успешно", 200
+        # Здесь будет код для удаления поста
+        flash('Пост успешно удален!')
+        
+    return redirect(url_for('feed'))
 
 def get_username(user_id):
     # Mock username retrieval
