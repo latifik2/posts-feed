@@ -1,0 +1,17 @@
+version: '3'
+services:
+  posts-feed:
+    image: latifik2/posts-feed:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    depends_on:
+      - mongodb
+  mongodb:
+    image: mongodb/mongodb-community-server:6.0-ubi8
+    volumes:
+      - type: bind
+        source: ./data
+        target: /data/db
