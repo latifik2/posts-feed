@@ -114,43 +114,35 @@
     </div>
 
     <!-- Список постов -->
-    {% for post in posts %}
-    <div class="post" id="post-{{ post._id }}">
-        <div class="post-header">
-            <div>
-                <strong>{{ post.username }}</strong>
-                <small>{{ post.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</small>
+    <div class="posts-container">
+        {% for post in posts %}
+        <div class="post" id="post-{{ post.id }}">
+            <div class="post-header">
+                <div>
+                    <strong>{{ post.username }}</strong>
+                    <small>{{ post.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</small>
+                </div>
+                <div class="post-actions">
+                    <button type="button" class="btn-warning" onclick="toggleEditForm('{{ post.id }}')">Редактировать</button>
+                    <button type="button" class="btn-danger" onclick="deletePost('{{ post.id }}')">Удалить</button>
+                </div>
             </div>
-            <div class="post-actions">
-                <button type="button" class="btn-warning" onclick="toggleEditForm('{{ post._id }}')">Редактировать</button>
-                <button type="button" class="btn-danger" onclick="deletePost('{{ post._id }}')">Удалить</button>
+            <div class="post-content" id="post-content-{{ post.id }}">
+                {{ post.content }}
+            </div>
+            <div class="edit-form" id="edit-form-{{ post.id }}" style="display: none;">
+                <textarea id="edit-content-{{ post.id }}">{{ post.content }}</textarea>
+                <button type="button" class="btn-primary" onclick="editPost('{{ post.id }}', document.getElementById('edit-content-{{ post.id }}').value)">Сохранить</button>
+                <button type="button" class="btn-danger" onclick="toggleEditForm('{{ post.id }}')">Отмена</button>
             </div>
         </div>
-        <div class="post-content" id="post-content-{{ post._id }}">
-            {{ post.content }}
-        </div>
-        <div class="edit-form" id="edit-form-{{ post._id }}">
-            <textarea id="edit-content-{{ post._id }}">{{ post.content }}</textarea>
-            <button type="button" class="btn-primary" onclick="editPost('{{ post._id }}', document.getElementById('edit-content-{{ post._id }}').value)">Сохранить</button>
-            <button type="button" class="btn-danger" onclick="toggleEditForm('{{ post._id }}')">Отмена</button>
-        </div>
+        {% endfor %}
     </div>
-    {% endfor %}
+
+    <div class="load-more-container" style="text-align: center; margin-top: 20px;">
+        <button id="load-more-btn" class="btn-primary" onclick="loadMorePosts()">Загрузить еще</button>
+    </div>
 </div>
 
-<script src="/static/js/posts.js"></script>
-<script>
-    function toggleEditForm(postId) {
-        const contentElement = document.getElementById(`post-content-${postId}`);
-        const editFormElement = document.getElementById(`edit-form-${postId}`);
-        
-        if (contentElement.style.display === 'none') {
-            contentElement.style.display = 'block';
-            editFormElement.style.display = 'none';
-        } else {
-            contentElement.style.display = 'none';
-            editFormElement.style.display = 'block';
-        }
-    }
-</script>
+<script src="{{ url_for('static', filename='js/posts.js') }}"></script>
 {% endblock %}

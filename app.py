@@ -1,6 +1,6 @@
 import os
 from datetime import datetime
-from flask import Flask, render_template, request, redirect, session, flash, url_for
+from flask import Flask, render_template, request, redirect, session, flash, url_for, jsonify
 from dotenv import load_dotenv
 import psycopg2
 from pymongo import MongoClient
@@ -9,6 +9,8 @@ import bcrypt
 from utils.config import get_config
 from database.users import UserService
 from utils.validators import validate_user_data, validate_login_data, validate_post_data
+from models.post import Post
+from database.repositories import PostRepository
 
 # Load environment variables from .env file
 load_dotenv()
@@ -37,19 +39,13 @@ app.config.from_object(config)
 # Инициализация сервиса пользователей
 user_service = UserService()
 
+# Add post_repository instance after user_service initialization
+post_repository = PostRepository()
+
 @app.route('/')
 def feed():
-    # Mock response for feed
-    mock_posts = [
-        {
-            '_id': '1',
-            'user_id': 1,
-            'username': 'demo_user',
-            'content': 'Это демо пост',
-            'created_at': datetime.now()
-        }
-    ]
-    return render_template('feed.html', posts=mock_posts)
+    posts = post_repository.get_posts()
+    return render_template('feed.html', posts=posts)
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -138,31 +134,48 @@ def create_post():
         flash(error_message)
         return redirect(url_for('feed'))
         
-    # Здесь будет код для сохранения поста в базу данных
-    flash('Пост успешно создан!')
+    user_id = session['user_id']
+    post = Post(
+        title="",  # или request.form.get('title', '').strip() если есть поле title
+        content=content,
+        author_id=user_id
+    )
+
+    try:
+        post_repository.create_post(post)
+        flash('Пост успешно создан!')
+    except Exception as e:
+        flash(f'Ошибка при создании поста: {str(e)}')
     return redirect(url_for('feed'))
 
 @app.route('/post/<post_id>', methods=['PUT', 'DELETE'])
 def manage_post(post_id):
     if 'user_id' not in session:
-        flash('Необходимо войти в систему')
-        return redirect(url_for('login'))
+        return jsonify({'error': 'Необходимо войти в систему'}), 401
         
     if request.method == 'PUT':
-        content = request.form.get('content', '').strip()
+        data = request.get_json()
+        content = data.get('content', '').strip()
         
         is_valid, error_message = validate_post_data(content)
         if not is_valid:
-            flash(error_message)
-            return redirect(url_for('feed'))
+            return jsonify({'error': error_message}), 400
             
-        # Здесь будет код для обновления поста
-        flash('Пост успешно обновлен!')
+        post = post_repository.get_post(post_id)
+        if post and post.author_id == session['user_id']:
+            post.content = content
+            post_repository.update_post(post_id, post)
+            return jsonify({'message': 'Пост успешно обновлен!'}), 200
+        else:
+            return jsonify({'error': 'Пост не найден или у вас нет прав на его редактирование'}), 403
+            
     elif request.method == 'DELETE':
-        # Здесь будет код для удаления поста
-        flash('Пост успешно удален!')
-        
-    return redirect(url_for('feed'))
+        post = post_repository.get_post(post_id)
+        if post and post.author_id == session['user_id']:
+            post_repository.delete_post(post_id)
+            return jsonify({'message': 'Пост успешно удален!'}), 200
+        else:
+            return jsonify({'error': 'Пост не найден или у вас нет прав на его удаление'}), 403
 
 @app.route('/profile', methods=['GET', 'POST', 'DELETE'])
 def profile():
@@ -233,6 +246,25 @@ def profile():
     
     # GET запрос - отображение профиля
     return render_template('profile.html', user=user)
+
+@app.route('/load_more')
+def load_more():
+    skip = int(request.args.get('skip', 0))
+    limit = int(request.args.get('limit', 10))
+    
+    posts = post_repository.get_posts(skip=skip, limit=limit)
+    posts_data = []
+    
+    for post in posts:
+        post_dict = {
+            'id': str(post.id),
+            'content': post.content,
+            'created_at': post.created_at.isoformat(),
+            'username': get_username(post.author_id)
+        }
+        posts_data.append(post_dict)
+    
+    return jsonify({'posts': posts_data})
 
 def get_username(user_id):
     # Mock username retrieval

@@ -37,7 +37,15 @@ class PostRepository:
         if limit is None:
             limit = config.POSTS_PER_PAGE
         posts = self.collection.find().skip(skip).limit(limit)
-        return [Post(**post) for post in posts]
+        result = []
+        for post in posts:
+            print("Debug - Raw post from MongoDB:", post)  # Debug line
+            try:
+                result.append(Post(**post))
+            except Exception as e:
+                print("Debug - Error converting post:", e)  # Debug line
+                print("Debug - Post data:", post)  # Debug line
+        return result
 
     def get_user_posts(self, user_id: int, skip: int = 0, limit: int = None) -> List[Post]:
         if limit is None:
