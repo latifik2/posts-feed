@@ -26,6 +26,8 @@ function editPost(postId, content) {
     })
     .then(response => {
         if (response.ok) {
+            // После успешного редактирования перезагружаем страницу
+            // для обновления кеша
             window.location.reload();
         } else {
             alert('Ошибка при редактировании поста');
@@ -45,6 +47,8 @@ function deletePost(postId) {
         })
         .then(response => {
             if (response.ok) {
+                // После успешного удаления перезагружаем страницу
+                // для обновления кеша
                 window.location.reload();
             } else {
                 alert('Ошибка при удалении поста');
@@ -91,7 +95,15 @@ function createPostElement(post) {
     postDiv.className = 'post';
     postDiv.id = `post-${post.id}`;
     
-    const createdAt = new Date(post.created_at).toLocaleString();
+    // Форматируем дату
+    let createdAt;
+    try {
+        // Пробуем преобразовать строку ISO в объект Date
+        createdAt = new Date(post.created_at).toLocaleString();
+    } catch (e) {
+        // Если не удалось, используем исходную строку
+        createdAt = post.created_at;
+    }
     
     postDiv.innerHTML = `
         <div class="post-header">

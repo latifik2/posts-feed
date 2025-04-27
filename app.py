@@ -6,6 +6,7 @@ import psycopg2
 from pymongo import MongoClient
 import redis
 import bcrypt
+import json
 from utils.config import get_config
 from database.users import UserService
 from utils.validators import validate_user_data, validate_login_data, validate_post_data
@@ -42,9 +43,72 @@ user_service = UserService()
 # Add post_repository instance after user_service initialization
 post_repository = PostRepository()
 
+# Инициализация Redis
+redis_client = redis.Redis(
+    host=config.REDIS_HOST,
+    port=config.REDIS_PORT,
+    db=0,
+    decode_responses=True
+)
+
+# Ключ для кеша последних постов
+RECENT_POSTS_CACHE_KEY = 'recent_posts'
+# Время жизни кеша (в секундах)
+CACHE_TTL = 300  # 5 минут
+
+def get_cached_posts():
+    """Получить последние посты из кеша Redis"""
+    cached_data = redis_client.get(RECENT_POSTS_CACHE_KEY)
+    if cached_data:
+        return json.loads(cached_data)
+    return None
+
+def cache_posts(posts):
+    """Сохранить посты в кеш Redis"""
+    posts_data = []
+    for post in posts:
+        post_dict = {
+            'id': str(post.id),
+            'content': post.content,
+            'created_at': post.created_at.isoformat(),
+            'username': get_username(post.author_id)
+        }
+        posts_data.append(post_dict)
+    
+    redis_client.setex(
+        RECENT_POSTS_CACHE_KEY,
+        CACHE_TTL,
+        json.dumps(posts_data)
+    )
+    return posts_data
+
 @app.route('/')
 def feed():
-    posts = post_repository.get_posts()
+    # Пытаемся получить посты из кеша
+    cached_posts = get_cached_posts()
+    
+    if cached_posts:
+        # Если посты есть в кеше, используем их
+        # Преобразуем строки дат в объекты datetime
+        for post in cached_posts:
+            post['created_at'] = datetime.fromisoformat(post['created_at'])
+        posts = cached_posts
+    else:
+        # Если постов нет в кеше, получаем их из MongoDB и кешируем
+        mongo_posts = post_repository.get_posts(limit=10)
+        # Преобразуем посты в словари для шаблона
+        posts = []
+        for post in mongo_posts:
+            post_dict = {
+                'id': str(post.id),
+                'content': post.content,
+                'created_at': post.created_at,
+                'username': get_username(post.author_id)
+            }
+            posts.append(post_dict)
+        # Кешируем посты
+        cache_posts(mongo_posts)
+    
     return render_template('feed.html', posts=posts)
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -136,13 +200,17 @@ def create_post():
         
     user_id = session['user_id']
     post = Post(
-        title="",  # или request.form.get('title', '').strip() если есть поле title
+        title="",  # или request.form.get('title', '').strip()
         content=content,
         author_id=user_id
     )
 
     try:
-        post_repository.create_post(post)
+        created_post = post_repository.create_post(post)
+        
+        # Обновляем кеш после создания нового поста
+        redis_client.delete(RECENT_POSTS_CACHE_KEY)
+        
         flash('Пост успешно создан!')
     except Exception as e:
         flash(f'Ошибка при создании поста: {str(e)}')
@@ -165,6 +233,10 @@ def manage_post(post_id):
         if post and post.author_id == session['user_id']:
             post.content = content
             post_repository.update_post(post_id, post)
+            
+            # Обновляем кеш после редактирования поста
+            redis_client.delete(RECENT_POSTS_CACHE_KEY)
+            
             return jsonify({'message': 'Пост успешно обновлен!'}), 200
         else:
             return jsonify({'error': 'Пост не найден или у вас нет прав на его редактирование'}), 403
@@ -173,6 +245,10 @@ def manage_post(post_id):
         post = post_repository.get_post(post_id)
         if post and post.author_id == session['user_id']:
             post_repository.delete_post(post_id)
+            
+            # Обновляем кеш после удаления поста
+            redis_client.delete(RECENT_POSTS_CACHE_KEY)
+            
             return jsonify({'message': 'Пост успешно удален!'}), 200
         else:
             return jsonify({'error': 'Пост не найден или у вас нет прав на его удаление'}), 403
@@ -252,6 +328,7 @@ def load_more():
     skip = int(request.args.get('skip', 0))
     limit = int(request.args.get('limit', 10))
     
+    # Всегда загружаем посты из MongoDB для кнопки "Загрузить еще"
     posts = post_repository.get_posts(skip=skip, limit=limit)
     posts_data = []
     
