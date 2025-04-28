@@ -22,9 +22,7 @@ services:
   mongodb:
     image: mongodb/mongodb-community-server:6.0-ubi8
     volumes:
-      - type: bind
-        source: ./data
-        target: /data/db
+      - mongo-data:/data/db
     networks:
       - app-net
 
@@ -39,3 +37,4 @@ networks:
 
 volumes:
   db-data:
+  mongo-data:
