@@ -99,11 +99,13 @@ def feed():
         # Преобразуем посты в словари для шаблона
         posts = []
         for post in mongo_posts:
+            username = get_username(post.author_id)
+            print(f"Debug - Post author_id: {post.author_id}, username: {username}")  # Debug line
             post_dict = {
                 'id': str(post.id),
                 'content': post.content,
                 'created_at': post.created_at,
-                'username': get_username(post.author_id)
+                'username': username
             }
             posts.append(post_dict)
         # Кешируем посты
@@ -344,7 +346,9 @@ def load_more():
     return jsonify({'posts': posts_data})
 
 def get_username(user_id):
+    print(f"Debug - Getting username for user_id: {user_id}")  # Debug line
     user = user_service.get_user_by_id(user_id)
+    print(f"Debug - Retrieved user: {user}")  # Debug line
     if user:
         return user.username
     return "Неизвестный пользователь"
