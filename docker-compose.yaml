@@ -1,17 +1,41 @@
 version: '3'
 services:
   posts-feed:
-    image: latifik2/posts-feed:latest
+    # image: latifik2/posts-feed:latest
     build:
       context: .
       dockerfile: Dockerfile
     ports:
       - "5000:5000"
+    networks:
+      - app-net
+    environment:
+      - REDIS_HOST=redis-cache
+      - REDIS_PORT=6379
+      - MONGO_URI=mongodb://mongodb:27017/
+      - MONGO_DB=posts_db
+    volumes:
+      - db-data:/app/data
     depends_on:
       - mongodb
+      - redis-cache
   mongodb:
     image: mongodb/mongodb-community-server:6.0-ubi8
     volumes:
       - type: bind
         source: ./data
         target: /data/db
+    networks:
+      - app-net
+
+  redis-cache:
+    image: redis:7.4.3-alpine3.21
+    networks:
+      - app-net
+
+networks:
+  app-net:
+    driver: bridge
+
+volumes:
+  db-data:

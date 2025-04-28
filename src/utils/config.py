@@ -11,7 +11,7 @@ class Config:
     DEBUG = os.getenv('FLASK_DEBUG', 'False').lower() in ('true', '1', 't')
     
     # Database settings
-    DATABASE_URL = os.getenv('DATABASE_URL', 'sqlite:///app.db')
+    DATABASE_URL = os.getenv('DATABASE_URL', 'sqlite:///data/app.db')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
     # Redis settings
@@ -30,13 +30,13 @@ class Config:
 class DevelopmentConfig(Config):
     """Development configuration."""
     DEBUG = True
-    DATABASE_URL = os.getenv('DEV_DATABASE_URL', 'sqlite:///dev.db')
+    DATABASE_URL = os.getenv('DEV_DATABASE_URL', 'sqlite:///data/dev.db')
 
 
 class TestingConfig(Config):
     """Testing configuration."""
     TESTING = True
-    DATABASE_URL = os.getenv('TEST_DATABASE_URL', 'sqlite:///test.db')
+    DATABASE_URL = os.getenv('TEST_DATABASE_URL', 'sqlite:///data/test.db')
     WTF_CSRF_ENABLED = False
 
 
