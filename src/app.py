@@ -344,11 +344,10 @@ def load_more():
     return jsonify({'posts': posts_data})
 
 def get_username(user_id):
-    # Mock username retrieval
-    # with pg_conn.cursor() as cur:
-    #     cur.execute("SELECT username FROM users WHERE id = %s", (user_id,))
-    #     return cur.fetchone()[0]
-    return "mock_user"
+    user = user_service.get_user_by_id(user_id)
+    if user:
+        return user.username
+    return "Неизвестный пользователь"
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

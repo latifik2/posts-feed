@@ -1,2 +1,6 @@
 src/.env
 .env
+venv/
+.env.example
+docker-compose.yaml
+nginx/

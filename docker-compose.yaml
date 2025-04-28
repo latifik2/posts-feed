@@ -41,7 +41,8 @@ services:
       - ./nginx/certs:/etc/nginx/certs
     networks:
       - app-net
-      
+    depends_on:
+      - posts-feed
 
 networks:
   app-net:
