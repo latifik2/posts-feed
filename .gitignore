@@ -8,3 +8,4 @@ __pycache__/*
 app.db
 .env
 src/venv
+gitlab/gitlab-data
