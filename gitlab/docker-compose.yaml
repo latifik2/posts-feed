@@ -1,6 +1,6 @@
 services:
   gitlab:
-    image: gitlab/gitlab-ee:17.9.0-ee.0
+    image: gitlab/gitlab-ee:17.11.2-ee.0
     container_name: gitlab
     restart: always
     hostname: 'gitlab-latif.ru'
@@ -14,7 +14,7 @@ services:
       - '443:443'
       - '22:22'
     volumes:
-      - './config:/etc/gitlab'
-      - './logs:/var/log/gitlab'
-      - './data:/var/opt/gitlab'
+      - './gitlab-data/config:/etc/gitlab'
+      - './gitlab-data/logs:/var/log/gitlab'
+      - './gitlab-data/data:/var/opt/gitlab'
     shm_size: '256m'
