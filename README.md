@@ -1,3 +1,5 @@
+# Изменения в файле README.md, которые подписаны GPG ключом :)
+
 # Posts Feed Application
 
 Веб-приложение для создания и просмотра постов с гибридным хранилищем данных (SQLite/PostgreSQL, MongoDB и Redis).
