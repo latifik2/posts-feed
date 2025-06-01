@@ -1,4 +1,3 @@
-version: '3'
 services:
   posts-feed:
     # image: latifik2/posts-feed:latest
@@ -15,7 +14,7 @@ services:
       - MONGO_URI=mongodb://mongodb:27017/
       - MONGO_DB=posts_db
     volumes:
-      - db-data:/app/data
+      - ./data:/app/data:rw
     depends_on:
       - mongodb
       - redis-cache

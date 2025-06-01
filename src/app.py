@@ -7,11 +7,18 @@ from pymongo import MongoClient
 import redis
 import bcrypt
 import json
+import logging
 from utils.config import get_config
 from database.users import UserService
 from utils.validators import validate_user_data, validate_login_data, validate_post_data
 from models.post import Post
 from database.repositories import PostRepository
+from models import db, init_db
+from database.init_db import init_db as init_sql_db
+
+# Настройка логирования
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 # Load environment variables from .env file
 load_dotenv()
@@ -21,6 +28,14 @@ config = get_config()
 
 app = Flask(__name__)
 app.config.from_object(config)
+
+# Настройка логирования Flask
+app.logger.setLevel(logging.DEBUG)
+handler = logging.StreamHandler()
+handler.setLevel(logging.DEBUG)
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+handler.setFormatter(formatter)
+app.logger.addHandler(handler)
 
 # PostgreSQL setup (Users)
 #pg_conn = psycopg2.connect(app.config['DATABASE_URL'])
@@ -116,25 +131,36 @@ def feed():
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
+        app.logger.debug("Starting registration process...")
         username = request.form.get('username', '').strip()
         email = request.form.get('email', '').strip()
         password = request.form.get('password', '').strip()
         first_name = request.form.get('first_name', '').strip()
         last_name = request.form.get('last_name', '').strip()
         
+        app.logger.debug(f"Received registration data - username: {username}, email: {email}")
+        
         is_valid, error_message = validate_user_data(username, email, password, first_name, last_name)
         if not is_valid:
+            app.logger.debug(f"Validation failed - {error_message}")
             flash(error_message)
             return render_template('register.html')
             
         try:
             # Проверяем, существует ли пользователь с таким именем или email
-            if user_service.get_user_by_username(username):
-                return "Ошибка: Пользователь с таким именем уже существует", 400
+            existing_user = user_service.get_user_by_username(username)
+            if existing_user:
+                app.logger.debug(f"Username {username} already exists")
+                flash("Ошибка: Пользователь с таким именем уже существует")
+                return render_template('register.html')
                 
-            if user_service.get_user_by_email(email):
-                return "Ошибка: Пользователь с таким email уже существует", 400
+            existing_email = user_service.get_user_by_email(email)
+            if existing_email:
+                app.logger.debug(f"Email {email} already exists")
+                flash("Ошибка: Пользователь с таким email уже существует")
+                return render_template('register.html')
             
+            app.logger.debug("Creating new user...")
             # Создаем нового пользователя
             user = user_service.create_user(
                 username=username,
@@ -144,15 +170,21 @@ def register():
                 last_name=last_name if last_name else None
             )
             
-            # Автоматически входим пользователя после регистрации
-            session['user_id'] = user.id
-            
-            flash('Регистрация успешна!')
-            return redirect(url_for('login'))
+            if user and user.id:
+                app.logger.debug(f"User created successfully with ID: {user.id}")
+                # Автоматически входим пользователя после регистрации
+                session['user_id'] = user.id
+                flash('Регистрация успешна!')
+                return redirect(url_for('login'))
+            else:
+                app.logger.error("User creation failed - no user ID returned")
+                flash("Ошибка при создании пользователя")
+                return render_template('register.html')
             
         except Exception as e:
-            # В реальном приложении здесь нужно логировать ошибку
-            return f"Ошибка при регистрации: {str(e)}", 500
+            app.logger.error(f"Error during registration: {str(e)}", exc_info=True)
+            flash(f"Ошибка при регистрации: {str(e)}")
+            return render_template('register.html')
             
     return render_template('register.html')
 
