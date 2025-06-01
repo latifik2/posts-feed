@@ -9,3 +9,4 @@ app.db
 .env
 src/venv
 gitlab/gitlab-data
+data/*

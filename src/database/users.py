@@ -3,22 +3,28 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from models.user import User
 from sqlalchemy.orm import Session
 from .init_db import get_db, SessionLocal
+import logging
+
+logger = logging.getLogger(__name__)
 
 class UserService:
     def __init__(self, session: Optional[Session] = None):
         self.session = session
+        logger.debug("UserService initialized")
 
     @property
     def db(self) -> Session:
         """Get database session."""
         if self.session is None:
-            # Создаем новую сессию вместо использования генератора
+            logger.debug("Creating new database session")
             return SessionLocal()
+        logger.debug("Using existing database session")
         return self.session
 
     def create_user(self, username: str, email: str, password: str,
                    first_name: Optional[str] = None, last_name: Optional[str] = None) -> User:
         """Create a new user."""
+        logger.debug(f"Creating user with username: {username}, email: {email}")
         user = User(
             username=username,
             email=email,
@@ -28,12 +34,21 @@ class UserService:
         self.set_password(user, password)
         db = self.db
         try:
+            logger.debug("Adding user to database session")
             db.add(user)
+            logger.debug("Committing user to database")
             db.commit()
+            logger.debug("Refreshing user object")
             db.refresh(user)
+            logger.debug(f"User created successfully with ID: {user.id}")
             return user
+        except Exception as e:
+            logger.error(f"Error creating user: {e}", exc_info=True)
+            db.rollback()
+            raise
         finally:
             if self.session is None:
+                logger.debug("Closing database session")
                 db.close()
 
     def get_user_by_id(self, user_id: int) -> Optional[User]:
@@ -56,9 +71,15 @@ class UserService:
 
     def get_user_by_username(self, username: str) -> Optional[User]:
         """Get user by username."""
+        logger.debug(f"Looking up user by username: {username}")
         db = self.db
         try:
-            return db.query(User).filter(User.username == username).first()
+            user = db.query(User).filter(User.username == username).first()
+            if user:
+                logger.debug(f"Found user with ID: {user.id}")
+            else:
+                logger.debug("User not found")
+            return user
         finally:
             if self.session is None:
                 db.close()
