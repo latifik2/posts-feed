@@ -1,7 +1,7 @@
 class DemoApp:
     def http_response_methods(self, url):
         return {
-            "status_code": 500,
+            "status_code": 200,
             "allowed_methods": ["GET", "POST", "PUT", "DELETE"]
         }
 
