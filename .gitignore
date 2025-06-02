@@ -10,3 +10,4 @@ app.db
 src/venv
 gitlab/gitlab-data
 data/*
+data/
