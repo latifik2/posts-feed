@@ -1,0 +1,11 @@
+default:
+  tags:
+    - shell-runner
+stages:
+  - test
+
+Unit tests:
+  stage: test
+  script:
+    - echo "Running unit tests"
+    - python3 tests/test_app.py
