@@ -14,9 +14,9 @@ Unit tests:
 
 Cache dependencies:
   stage: cache
-  tags:
-    - docker-runner
-  image: python:3.11
+  # tags:
+  #   - docker-runner
+  # image: python:3.11
   cache:
     key: ${CI_COMMIT_REF_SLUG}
     paths:
