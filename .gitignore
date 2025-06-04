@@ -11,3 +11,4 @@ src/venv
 gitlab/gitlab-data
 data/*
 data/
+.cache/

@@ -3,6 +3,7 @@ default:
     - shell-runner
 stages:
   - test
+  - cache
   - build
 
 Unit tests:
@@ -10,6 +11,19 @@ Unit tests:
   script:
     - echo "Running unit tests"
     - python3 tests/test_app.py
+
+Cache dependencies:
+  stage: cache
+  tags:
+    - docker-runner
+  image: python:3.11
+  cache:
+    key: ${CI_COMMIT_REF_SLUG}
+    paths:
+      - .cache
+  script:
+    - echo "Caching dependencies"
+    - pip install --cache-dir .cache -r requirements.txt
 
 Build Docker image:
   stage: build
