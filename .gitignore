@@ -11,3 +11,5 @@ src/venv
 gitlab/gitlab-data
 data/*
 data/
+.cache/
+.pytest_cache/
