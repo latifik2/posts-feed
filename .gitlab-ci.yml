@@ -10,7 +10,7 @@ Unit tests:
   stage: test
   script:
     - echo "Running unit tests"
-    - python3 tests/test_app.py
+    - python3 tests/unit/test_app.py
 
 Integration tests:
   stage: test
