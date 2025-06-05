@@ -12,6 +12,18 @@ Unit tests:
     - echo "Running unit tests"
     - python3 tests/test_app.py
 
+Integration tests:
+  stage: test
+  cache:
+    key: ${CI_COMMIT_REF_SLUG}
+    paths:
+      - .cache
+  before_script:
+    - pip install --cache-dir .cache -r requirements.txt # installing all dependecies from requirements.txt instead of direct pytest==8.x.x to avoid future dependencies issues and reusing cache
+  script:
+    - echo "Running integration tests"
+    - pytest tests/integration/test_mongodb.py -v
+
 Cache dependencies:
   stage: cache
   # tags:
