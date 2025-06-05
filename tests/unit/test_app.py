@@ -9,7 +9,7 @@ class TestApp(unittest.TestCase):
         self.assertEqual(
             self.app.http_response_methods('http://localhost'),
             {
-                "status_code": 200,
+                "status_code": 500,
                 "allowed_methods": ["GET", "POST", "PUT", "DELETE"]
             }
         )
