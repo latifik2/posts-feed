@@ -1,0 +1,29 @@
+#!/bin/bash
+
+# Регулярные выражения для поиска секретов (ключей API, токенов и т. д.)
+SECRET_PATTERNS=(
+  "AKIA[0-9A-Z]{16}"                  # AWS Access Key ID
+  "[0-9a-zA-Z/+]{40}"                 # GitHub Personal Access Token
+  "sk_[a-zA-Z0-9]{32}"                # Stripe Secret Key
+  "sk_live_[0-9a-zA-Z]{24,32}"        # Stripe Live Secret Key
+  "AIza[0-9A-Za-z_-]{35}"             # Google API Key
+  "-----BEGIN (RSA|OPENSSH) PRIVATE KEY-----"  # Приватные SSH-ключи
+)
+
+# Проверяем только измененные файлы (staged)
+FILES=$(git diff --cached --name-only --diff-filter=ACM)
+
+for FILE in $FILES; do
+  for PATTERN in "${SECRET_PATTERNS[@]}"; do
+    # Ищем совпадения в файле, используя -e для явного указания паттерна
+    if grep -E -e "$PATTERN" "$FILE" >/dev/null 2>&1; then
+      echo "❌ Ошибка: Найден возможный секрет в файле $FILE!"
+      echo "   Паттерн: $PATTERN"
+      echo "   Удалите секрет перед коммитом!"
+      exit 1
+    fi
+  done
+done
+
+echo "✅ Проверка на секреты пройдена успешно!"
+exit 0
