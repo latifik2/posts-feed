@@ -24,6 +24,8 @@ services:
       - mongo-data:/data/db
     networks:
       - app-net
+    ports:
+      - "27017:27017"
 
   redis-cache:
     image: redis:7.4.3-alpine3.21
