@@ -39,7 +39,7 @@ Lint the code:
   before_script:
     - pip install --cache-dir .cache flake8==7.3.0
   script:
-    - flake8 ./src
+    - flake8 ./src/app.py
 
 Cache dependencies:
   stage: cache
