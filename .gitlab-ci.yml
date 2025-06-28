@@ -27,6 +27,19 @@ Integration tests:
     - echo "The MONGO_TEST_COLLECTION (should be masked) env is $MONGO_TEST_COLLECTION"
     - pytest tests/integration/test_mongodb.py -v
 
+Lint the code:
+  stage: test
+  tag: docker-tests
+  image: python:3.11-slim
+  cache:
+    key: ${CI_COMMIT_REF_SLUG}-lint
+    paths:
+      - .cache
+  before_script:
+    - pip install --cache-dir .cache flake8==7.3.0
+  script:
+    - flake8 ./src
+
 Cache dependencies:
   stage: cache
   cache:
