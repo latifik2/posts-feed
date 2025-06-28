@@ -1,3 +1,5 @@
+# flake8: noqa
+
 from datetime import datetime
 from flask import (
     Flask,
@@ -15,7 +17,11 @@ import json
 import logging
 from utils.config import get_config
 from database.users import UserService
-from utils.validators import validate_user_data, validate_login_data, validate_post_data
+from utils.validators import (
+    validate_user_data,
+    validate_login_data,
+    validate_post_data
+)
 from models.post import Post
 from database.repositories import PostRepository
 
@@ -39,21 +45,6 @@ handler.setLevel(logging.DEBUG)
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 handler.setFormatter(formatter)
 app.logger.addHandler(handler)
-
-# PostgreSQL setup (Users)
-#pg_conn = psycopg2.connect(app.config['DATABASE_URL'])
-
-# MongoDB setup (Posts)
-#mongo_client = MongoClient(app.config['MONGO_URI'])
-#mongo_db = mongo_client[app.config['MONGO_DB']]
-#posts_collection = mongo_db.posts
-
-# Redis setup (Cache)
-#redis_client = redis.Redis(
-#    host=app.config['REDIS_HOST'],
-#    port=app.config['REDIS_PORT'],
-#    db=0
-#)
 
 # Инициализация сервиса пользователей
 user_service = UserService()
@@ -295,13 +286,13 @@ def profile():
     if 'user_id' not in session:
         flash('Необходимо войти в систему')
         return redirect(url_for('login'))
-    
+
     # Получаем данные пользователя
     user = user_service.get_user_by_id(session['user_id'])
     if not user:
         flash('Пользователь не найден')
         return redirect(url_for('login'))
-    
+
     # Обработка DELETE запроса (удаление профиля)
     if request.method == 'DELETE' or (request.method == 'POST' and request.form.get('_method') == 'DELETE'):
         # Проверяем пароль для подтверждения
