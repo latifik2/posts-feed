@@ -29,7 +29,7 @@ Integration tests:
 
 Lint the code:
   stage: test
-  tag: docker-tests
+  tag: docker-runner-tests
   image: python:3.11-slim
   cache:
     key: ${CI_COMMIT_REF_SLUG}-lint
