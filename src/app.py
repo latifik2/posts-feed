@@ -1,11 +1,15 @@
-import os
 from datetime import datetime
-from flask import Flask, render_template, request, redirect, session, flash, url_for, jsonify
+from flask import
+    Flask,
+    render_template,
+    request,
+    redirect,
+    session,
+    flash,
+    url_for,
+    jsonify
 from dotenv import load_dotenv
-import psycopg2
-from pymongo import MongoClient
 import redis
-import bcrypt
 import json
 import logging
 from utils.config import get_config
@@ -13,8 +17,6 @@ from database.users import UserService
 from utils.validators import validate_user_data, validate_login_data, validate_post_data
 from models.post import Post
 from database.repositories import PostRepository
-from models import db, init_db
-from database.init_db import init_db as init_sql_db
 
 # Настройка логирования
 logging.basicConfig(level=logging.DEBUG)
