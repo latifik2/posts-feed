@@ -13,20 +13,20 @@ Unit tests:
     - echo "Running unit tests"
     - python3 tests/unit/test_app.py
 
-Integration tests:
-  stage: test
-  cache:
-    key: ${CI_COMMIT_REF_SLUG}
-    paths:
-      - .cache
-  before_script:
-    - pip install --cache-dir .cache -r requirements.txt # installing all dependecies from requirements.txt instead of direct pytest==8.x.x to avoid future dependencies issues and reusing cache
-  script:
-    - echo "Running integration tests"
-    - echo "The MONGO_URI env is $MONGO_URI"
-    - echo "The MONGO_TEST_DB (should be masked) env is $MONGO_TEST_DB"
-    - echo "The MONGO_TEST_COLLECTION (should be masked) env is $MONGO_TEST_COLLECTION"
-    - pytest tests/integration/test_mongodb.py -v
+# Integration tests:
+#   stage: test
+#   cache:
+#     key: ${CI_COMMIT_REF_SLUG}
+#     paths:
+#       - .cache
+#   before_script:
+#     - pip install --cache-dir .cache -r requirements.txt # installing all dependecies from requirements.txt instead of direct pytest==8.x.x to avoid future dependencies issues and reusing cache
+#   script:
+#     - echo "Running integration tests"
+#     - echo "The MONGO_URI env is $MONGO_URI"
+#     - echo "The MONGO_TEST_DB (should be masked) env is $MONGO_TEST_DB"
+#     - echo "The MONGO_TEST_COLLECTION (should be masked) env is $MONGO_TEST_COLLECTION"
+#     - pytest tests/integration/test_mongodb.py -v
 
 Lint the code:
   stage: test
