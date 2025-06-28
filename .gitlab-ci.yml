@@ -3,6 +3,7 @@ default:
     - shell-runner
 stages:
   - test
+  - security
   - cache
   - build
 
@@ -40,6 +41,20 @@ Lint the code:
     - pip install --cache-dir .cache flake8==7.3.0
   script:
     - flake8 ./src/app.py
+
+Check dependencies vulnarabilities:
+  stage: security
+  tags:
+    - docker-runner
+  image: python:3.11-slim
+  cache:
+    key: ${CI_COMMIT_REF_SLUG}-safety
+    paths:
+      - .cache
+  before_script:
+    - pip install --cache-dir .cache safety==3.5.2
+  script:
+    - safety scan
 
 Cache dependencies:
   stage: cache
