@@ -1,5 +1,5 @@
 from datetime import datetime
-from flask import
+from flask import (
     Flask,
     render_template,
     request,
@@ -8,6 +8,7 @@ from flask import
     flash,
     url_for,
     jsonify
+)
 from dotenv import load_dotenv
 import redis
 import json
