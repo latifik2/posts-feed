@@ -1,3 +1,0 @@
-[[allowlist]]
-description = "Ignore private key"
-paths = ["nginx/certs/app.key"]
