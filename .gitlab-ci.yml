@@ -119,6 +119,7 @@ Run OWASP ZAP web scan:
       alias: redis
     - name: latifik2/posts-feed:latest
       alias: posts-feed
+      pull_policy: always
   variables:
     FF_NETWORK_PER_BUILD: 1
     CI_DEBUG_SERVICES: "true"
