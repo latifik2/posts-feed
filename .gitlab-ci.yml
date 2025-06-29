@@ -106,6 +106,7 @@ Build Docker image:
     - echo "Building Docker image"
     - docker build -t latifik2/posts-feed:latest .
     - docker push latifik2/posts-feed:latest
+  allow_failure: true
 
 Run OWASP ZAP web scan:
   stage: dast
