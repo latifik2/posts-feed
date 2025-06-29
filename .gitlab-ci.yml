@@ -54,7 +54,7 @@ Check dependencies vulnarabilities:
   before_script:
     - pip install --cache-dir .cache safety==3.5.2
   script:
-    - safety scan
+    - safety --key $SAFETY_API_KEY --stage cicd scan
 
 Cache dependencies:
   stage: cache
