@@ -129,4 +129,4 @@ Run OWASP ZAP web scan:
   before_script:
     - apk update && apk add curl unzip
   script:
-    - curl http://posts-feed
+    - curl http://posts-feed:5000
