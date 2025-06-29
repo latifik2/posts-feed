@@ -109,6 +109,8 @@ Build Docker image:
   allow_failure: true
 
 Run OWASP ZAP web scan:
+  tags:
+    - docker-runner
   stage: dast
   services:
     - name: mongodb/mongodb-community-server:6.0-ubi8
