@@ -104,8 +104,8 @@ Build Docker image:
     - docker login -u $DOCKERHUB_USER -p $DOCKERHUB_PASS
   script:
     - echo "Building Docker image"
-    - docker build -t latifik2/posts-feed:latest .
-    - docker push latifik2/posts-feed:latest
+    - docker build -t latifik2/posts-feed:fix-expose .
+    - docker push latifik2/posts-feed:fix-expose
   allow_failure: true
 
 Run OWASP ZAP web scan:
@@ -117,7 +117,7 @@ Run OWASP ZAP web scan:
       alias: mongodb
     - name: redis:7.4.3-alpine3.21
       alias: redis
-    - name: latifik2/posts-feed:latest
+    - name: latifik2/posts-feed:fix-expose
       alias: posts-feed
       pull_policy: always
   variables:
