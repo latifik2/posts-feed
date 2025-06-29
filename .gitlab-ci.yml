@@ -70,6 +70,14 @@ Check code security:
   script:
     - bandit -r ./src --severity-level=high
 
+Run GitLeaks:
+  stage: security
+  tags:
+    - docker-runner
+  image: ghcr.io/gitleaks/gitleaks:v8.27.2
+  script:
+    - gitleaks git
+
 Cache dependencies:
   stage: cache
   cache:
