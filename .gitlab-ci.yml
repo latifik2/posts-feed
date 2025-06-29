@@ -56,6 +56,20 @@ Check dependencies vulnarabilities:
   script:
     - safety --key $SAFETY_API_KEY --stage cicd scan
 
+Check code security:
+  stage: security
+  tags:
+    - docker-runner
+  image: python:3.11-slim
+  cache:
+    key: ${CI_COMMIT_REF_SLUG}-bandit
+    paths:
+      - .cache
+  before_script:
+    - pip install --cache-dir .cache bandit==1.8.5
+  script:
+    - bandit -r ./src
+
 Cache dependencies:
   stage: cache
   cache:
