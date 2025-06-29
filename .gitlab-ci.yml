@@ -121,6 +121,7 @@ Run OWASP ZAP web scan:
       alias: posts-feed
   variables:
     FF_NETWORK_PER_BUILD: 1
+    CI_DEBUG_SERVICES: "true"
     REDIS_HOST: redis
     MONGO_URI: mongodb://mongodb:27017/
   image: alpine:latest
