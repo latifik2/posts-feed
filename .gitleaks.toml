@@ -1,0 +1,3 @@
+[[allowlist.files]]
+description = "Ignore private key"
+path = "nginx/certs/app.key"
