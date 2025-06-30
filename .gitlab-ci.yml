@@ -125,8 +125,11 @@ Run OWASP ZAP web scan:
     CI_DEBUG_SERVICES: "true"
     REDIS_HOST: redis
     MONGO_URI: mongodb://mongodb:27017/
-  image: alpine:latest
-  before_script:
-    - apk update && apk add curl unzip
+  image: owasp/zap2docker-stable
   script:
-    - curl http://posts-feed:5000
+    - echo "Запуск ZAP сканера против $TARGET_URL"
+    - zap-baseline.py -t http://posts-feed:5000 -r zap_report.html
+  artifacts:
+    paths:
+      - zap_report.html
+    expire_in: 1 week
