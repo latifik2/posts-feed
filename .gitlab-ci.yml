@@ -127,7 +127,7 @@ Run OWASP ZAP web scan:
     MONGO_URI: mongodb://mongodb:27017/
   image: zaproxy/zap-stable:2.16.1
   script:
-    - zap-baseline.py -t http::/posts-feed:5000 -r zap_report.html
+    - zap-baseline.py -t http://posts-feed:5000 -r zap_report.html
   artifacts:
     paths:
       - zap_report.html
