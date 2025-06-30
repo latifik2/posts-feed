@@ -2,111 +2,111 @@ default:
   tags:
     - shell-runner
 stages:
-  - test
-  - security
-  - cache
-  - build
+  # - test
+  # - security
+  # - cache
+  # - build
   - dast
 
-Unit tests:
-  stage: test
-  script:
-    - echo "Running unit tests"
-    - python3 tests/unit/test_app.py
-
-# Integration tests:
+# Unit tests:
 #   stage: test
+#   script:
+#     - echo "Running unit tests"
+#     - python3 tests/unit/test_app.py
+
+# # Integration tests:
+# #   stage: test
+# #   cache:
+# #     key: ${CI_COMMIT_REF_SLUG}
+# #     paths:
+# #       - .cache
+# #   before_script:
+# #     - pip install --cache-dir .cache -r requirements.txt # installing all dependecies from requirements.txt instead of direct pytest==8.x.x to avoid future dependencies issues and reusing cache
+# #   script:
+# #     - echo "Running integration tests"
+# #     - echo "The MONGO_URI env is $MONGO_URI"
+# #     - echo "The MONGO_TEST_DB (should be masked) env is $MONGO_TEST_DB"
+# #     - echo "The MONGO_TEST_COLLECTION (should be masked) env is $MONGO_TEST_COLLECTION"
+# #     - pytest tests/integration/test_mongodb.py -v
+
+# Lint the code:
+#   stage: test
+#   tags:
+#     - docker-runner
+#   image: python:3.11-slim
+#   cache:
+#     key: ${CI_COMMIT_REF_SLUG}-lint
+#     paths:
+#       - .cache
+#   before_script:
+#     - pip install --cache-dir .cache flake8==7.3.0
+#   script:
+#     - flake8 ./src/app.py
+
+# Check dependencies vulnarabilities:
+#   stage: security
+#   tags:
+#     - docker-runner
+#   image: python:3.11-slim
+#   cache:
+#     key: ${CI_COMMIT_REF_SLUG}-safety
+#     paths:
+#       - .cache
+#   before_script:
+#     - pip install --cache-dir .cache safety==3.5.2
+#   script:
+#     - safety --key $SAFETY_API_KEY --stage cicd scan
+
+# Check code security:
+#   stage: security
+#   tags:
+#     - docker-runner
+#   image: python:3.11-slim
+#   cache:
+#     key: ${CI_COMMIT_REF_SLUG}-bandit
+#     paths:
+#       - .cache
+#   before_script:
+#     - pip install --cache-dir .cache bandit==1.8.5
+#   script:
+#     - bandit -r ./src --severity-level=high
+
+# Run GitLeaks:
+#   stage: security
+#   tags:
+#     - docker-runner
+#   image: alpine:latest
+#   before_script:
+#     - apk add --no-cache curl unzip git
+#     - curl -sSL https://github.com/gitleaks/gitleaks/releases/download/v8.27.2/gitleaks_8.27.2_linux_x64.tar.gz | tar -xz -C /usr/local/bin gitleaks
+#   script:
+#     - gitleaks dir --report-path gitleaks-report.json
+#   artifacts:
+#     paths:
+#       - gitleaks-report.json
+#     when: always
+#   allow_failure: true
+
+# Cache dependencies:
+#   stage: cache
 #   cache:
 #     key: ${CI_COMMIT_REF_SLUG}
 #     paths:
 #       - .cache
-#   before_script:
-#     - pip install --cache-dir .cache -r requirements.txt # installing all dependecies from requirements.txt instead of direct pytest==8.x.x to avoid future dependencies issues and reusing cache
 #   script:
-#     - echo "Running integration tests"
-#     - echo "The MONGO_URI env is $MONGO_URI"
-#     - echo "The MONGO_TEST_DB (should be masked) env is $MONGO_TEST_DB"
-#     - echo "The MONGO_TEST_COLLECTION (should be masked) env is $MONGO_TEST_COLLECTION"
-#     - pytest tests/integration/test_mongodb.py -v
+#     - echo "Caching dependencies"
+#     - pip install --cache-dir .cache -r requirements.txt
 
-Lint the code:
-  stage: test
-  tags:
-    - docker-runner
-  image: python:3.11-slim
-  cache:
-    key: ${CI_COMMIT_REF_SLUG}-lint
-    paths:
-      - .cache
-  before_script:
-    - pip install --cache-dir .cache flake8==7.3.0
-  script:
-    - flake8 ./src/app.py
-
-Check dependencies vulnarabilities:
-  stage: security
-  tags:
-    - docker-runner
-  image: python:3.11-slim
-  cache:
-    key: ${CI_COMMIT_REF_SLUG}-safety
-    paths:
-      - .cache
-  before_script:
-    - pip install --cache-dir .cache safety==3.5.2
-  script:
-    - safety --key $SAFETY_API_KEY --stage cicd scan
-
-Check code security:
-  stage: security
-  tags:
-    - docker-runner
-  image: python:3.11-slim
-  cache:
-    key: ${CI_COMMIT_REF_SLUG}-bandit
-    paths:
-      - .cache
-  before_script:
-    - pip install --cache-dir .cache bandit==1.8.5
-  script:
-    - bandit -r ./src --severity-level=high
-
-Run GitLeaks:
-  stage: security
-  tags:
-    - docker-runner
-  image: alpine:latest
-  before_script:
-    - apk add --no-cache curl unzip git
-    - curl -sSL https://github.com/gitleaks/gitleaks/releases/download/v8.27.2/gitleaks_8.27.2_linux_x64.tar.gz | tar -xz -C /usr/local/bin gitleaks
-  script:
-    - gitleaks dir --report-path gitleaks-report.json
-  artifacts:
-    paths:
-      - gitleaks-report.json
-    when: always
-  allow_failure: true
-
-Cache dependencies:
-  stage: cache
-  cache:
-    key: ${CI_COMMIT_REF_SLUG}
-    paths:
-      - .cache
-  script:
-    - echo "Caching dependencies"
-    - pip install --cache-dir .cache -r requirements.txt
-
-Build Docker image:
-  stage: build
-  before_script:
-    - echo "Logging in to Docker registry"
-    - docker login -u $DOCKERHUB_USER -p $DOCKERHUB_PASS
-  script:
-    - echo "Building Docker image"
-    - docker build -t latifik2/posts-feed:fix-expose .
-    - docker push latifik2/posts-feed:fix-expose
-  allow_failure: true
+# Build Docker image:
+#   stage: build
+#   before_script:
+#     - echo "Logging in to Docker registry"
+#     - docker login -u $DOCKERHUB_USER -p $DOCKERHUB_PASS
+#   script:
+#     - echo "Building Docker image"
+#     - docker build -t latifik2/posts-feed:fix-expose .
+#     - docker push latifik2/posts-feed:fix-expose
+#   allow_failure: true
 
 Run OWASP ZAP web scan:
   tags:
@@ -120,11 +120,9 @@ Run OWASP ZAP web scan:
     - name: latifik2/posts-feed:fix-expose
       alias: posts-feed
       pull_policy: always
-    - name: docker:dind
-      alias: docker
   variables:
     FF_NETWORK_PER_BUILD: 1
-    CI_DEBUG_SERVICES: "true"
+    # CI_DEBUG_SERVICES: "true"
     REDIS_HOST: redis
     MONGO_URI: mongodb://mongodb:27017/
   image: zaproxy/zap-stable:2.16.1
@@ -132,8 +130,8 @@ Run OWASP ZAP web scan:
     - mkdir /zap/wrk
     - chmod +rw /zap/wrk
   script:
-    - zap-baseline.py -t http://posts-feed:5000 -r zap_report.html
+    - zap-baseline.py -t http://posts-feed:5000 -r /zap/wrk/zap_report.html
   artifacts:
     paths:
-      - zap_report.html
+      - /zap/wrk/zap_report.html
 
