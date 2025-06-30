@@ -110,7 +110,7 @@ Build Docker image:
 
 Run OWASP ZAP web scan:
   tags:
-    - shell-runner
+    - docker-runner
   stage: dast
   services:
     - name: mongodb/mongodb-community-server:6.0-ubi8
@@ -127,9 +127,12 @@ Run OWASP ZAP web scan:
     CI_DEBUG_SERVICES: "true"
     REDIS_HOST: redis
     MONGO_URI: mongodb://mongodb:27017/
-  # image: zaproxy/zap-stable:2.16.1
+  image: zaproxy/zap-stable:2.16.1
+  before_script:
+    - mkdir /zap/wrk
+    - chmod +rw /zap/wrk
   script:
-    - docker run -v $(pwd):/zap/wrk/:rw -t zaproxy/zap-stable zap-baseline.py -t http://posts-feed:5000 -r zap_report.html
+    - zap-baseline.py -t http://posts-feed:5000 -r zap_report.html
   artifacts:
     paths:
       - zap_report.html
