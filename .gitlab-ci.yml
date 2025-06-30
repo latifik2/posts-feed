@@ -125,11 +125,28 @@ Run OWASP ZAP web scan:
     CI_DEBUG_SERVICES: "true"
     REDIS_HOST: redis
     MONGO_URI: mongodb://mongodb:27017/
-  image: owasp/zap2docker-stable
+  image: zaproxy/zap-stable:2.16.1
+  before_script:
+    - apk add --no-cache curl bash jq
   script:
-    - echo "Запуск ZAP сканера против $TARGET_URL"
-    - zap-baseline.py -t http://posts-feed:5000 -r zap_report.html
+    - zap.sh -daemon -host 0.0.0.0 -port $ZAP_PORT -config api.disablekey=true &
+    - echo "Ожидание ZAP..."
+    - sleep 15
+    - echo "Spider scan"
+    - >
+      curl "http://localhost:$ZAP_PORT/JSON/spider/action/scan/?url=$TARGET"
+    - sleep 10
+    - echo "Active scan"
+    - >
+      curl "http://localhost:$ZAP_PORT/JSON/ascan/action/scan/?url=$TARGET"
+    - |
+      while true; do
+        STATUS=$(curl -s "http://localhost:$ZAP_PORT/JSON/ascan/view/status/" | jq -r .status)
+        echo "Status: $STATUS%"
+        [ "$STATUS" = "100" ] && break
+        sleep 5
+      done
+    - curl "http://localhost:$ZAP_PORT/OTHER/core/other/htmlreport/" -o zap_report.html
   artifacts:
     paths:
       - zap_report.html
-    expire_in: 1 week
