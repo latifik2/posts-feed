@@ -120,14 +120,17 @@ Run OWASP ZAP web scan:
     - name: latifik2/posts-feed:fix-expose
       alias: posts-feed
       pull_policy: always
+    - name: docker:dind
+      alias: docker
   variables:
     FF_NETWORK_PER_BUILD: 1
     CI_DEBUG_SERVICES: "true"
     REDIS_HOST: redis
     MONGO_URI: mongodb://mongodb:27017/
-  image: zaproxy/zap-stable:2.16.1
+    DOCKER_HOST: tcp://docker:2375/
+  image: docker:latest
   script:
-    - zap-baseline.py -t http://posts-feed:5000 -r zap_report.html
+    - docker run -v $(pwd):/zap/wrk/:rw -t zaproxy/zap-stable zap-baseline.py -t http://posts-feed:5000 -r zap_report.html
   artifacts:
     paths:
       - zap_report.html
